@@ -41,7 +41,6 @@ Abrir **http://localhost:8088** en el navegador.
 ```
 .
 ├── docker-compose.yml     # 3 nodos + lb, red clusternet, volumen votos, healthchecks
-├── nginx/nginx.conf       # balanceador (upstream, reintento en otro nodo, timeouts)
 ├── app/
 │   ├── Dockerfile         # node:22-alpine, sin dependencias externas
 │   ├── server.js          # API + servidor de archivos estáticos

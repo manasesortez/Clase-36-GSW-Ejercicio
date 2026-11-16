@@ -3,3 +3,4 @@ app/data/
 *.log
 .DS_Store
 Thumbs.db
+nginx/nginx.conf
