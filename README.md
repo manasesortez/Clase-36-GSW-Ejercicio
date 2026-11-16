@@ -88,8 +88,9 @@ docker compose start nodo2
 - **`zone` en el `upstream`**: los workers de Nginx comparten el turno del Round Robin (sin esto, peticiones
   sueltas caen siempre en `nodo1`).
 - **`proxy_connect_timeout 2s`**: un nodo apagado se detecta en 2 s y no en los 60 s por defecto.
-- **`resolver 127.0.0.11` + `resolve`**: Nginx arranca y se reinicia aunque un nodo esté apagado, y lo
-  vuelve a encontrar al encenderlo (sin el error `host not found in upstream`).
+- **IPs fijas + `extra_hosts` en `lb`**: Nginx lee `nodo1..3` de su `/etc/hosts`, así arranca y se
+  reinicia aunque un nodo esté apagado (sin el error `host not found in upstream`). Se descartó
+  `resolve` (DNS dinámico): en las pruebas producía un 502 ocasional al apagar un nodo.
 - **Volumen `votos` compartido**: todos los nodos ven los mismos resultados. El bloqueo de voto doble usa
   la creación atómica de un archivo por carnet, así que no hay votos dobles aunque lleguen a nodos distintos.
 - **`depends_on: service_healthy`**: el balanceador arranca cuando los 3 nodos ya pasaron su health check.
