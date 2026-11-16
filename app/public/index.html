@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Elección Estudiantil 2026</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="hero">
+    <div class="contenedor">
+      <p class="etiqueta">Plataforma de votación en alta disponibilidad</p>
+      <h1>Elección Estudiantil 2026</h1>
+      <p class="sub">
+        Este sitio corre en un clúster de <strong>3 nodos</strong> detrás de un balanceador
+        <strong>Nginx</strong>. Si un servidor falla, la votación sigue.
+      </p>
+      <div class="estado-hero">
+        <span id="badge-estado" class="badge">Conectando…</span>
+        <span>Esta página la sirvió: <strong id="nodo-pagina">—</strong></span>
+      </div>
+    </div>
+  </header>
+
+  <main class="contenedor">
+    <section class="tarjeta">
+      <h2>1. Emitir voto</h2>
+      <form id="form-voto">
+        <label for="carnet">Carnet</label>
+        <input id="carnet" name="carnet" placeholder="Ej. 2026-0001" required
+               pattern="[A-Za-z0-9-]{4,20}" autocomplete="off">
+        <div id="candidatos" class="candidatos" role="radiogroup" aria-label="Candidatos"></div>
+        <button type="submit">Votar</button>
+      </form>
+      <p id="mensaje-voto" class="mensaje" role="status"></p>
+    </section>
+
+    <section class="tarjeta">
+      <h2>2. Resultados en vivo</h2>
+      <div id="resultados" class="resultados"></div>
+      <p class="pie">Total de votos: <strong id="total">0</strong> ·
+        consultado en <strong id="nodo-resultados">—</strong></p>
+      <p class="pie" id="votos-por-nodo"></p>
+    </section>
+
+    <section class="tarjeta ancha">
+      <div class="titulo-monitor">
+        <h2>3. Monitor del clúster</h2>
+        <button id="btn-monitor" type="button" class="secundario">Pausar</button>
+      </div>
+      <p class="pie">Una petición a <code>/api/info</code> cada segundo, a través del balanceador.
+        Apague un nodo (<code>docker compose stop nodo2</code>) y observe que la página sigue respondiendo.</p>
+      <div id="contadores" class="contadores"></div>
+      <table class="tabla">
+        <thead><tr><th>Hora</th><th>Nodo</th><th>HTTP</th><th>Tiempo</th></tr></thead>
+        <tbody id="tabla-monitor"></tbody>
+      </table>
+    </section>
+
+    <section class="tarjeta ancha">
+      <h2>4. Consultas de ejemplo a la API</h2>
+      <form id="form-consulta" class="consulta">
+        <select id="endpoint" aria-label="Endpoint">
+          <option value="/health">GET /health</option>
+          <option value="/api/info">GET /api/info</option>
+          <option value="/api/candidatos">GET /api/candidatos</option>
+          <option value="/api/resultados">GET /api/resultados</option>
+          <option value="/api/votos/">GET /api/votos/{carnet}</option>
+        </select>
+        <input id="param" placeholder="carnet (solo para /api/votos)" autocomplete="off">
+        <button type="submit">Consultar</button>
+      </form>
+      <pre id="respuesta" class="respuesta">Elija un endpoint y presione Consultar.</pre>
+    </section>
+  </main>
+
+  <footer class="contenedor pie">
+    Gestión de Servidores Web · Clase 36 · Ejercicio integrador: clúster + balanceo de carga
+  </footer>
+
+  <script src="/app.js"></script>
+</body>
+</html>
