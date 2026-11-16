@@ -45,7 +45,7 @@ Abrir **http://localhost:8088** en el navegador.
 ├── app/
 │   ├── Dockerfile         # node:22-alpine, sin dependencias externas
 │   ├── server.js          # API + servidor de archivos estáticos
-│   └── public/            # landing page: votar, resultados, monitor del clúster, consultas
+│   └── public/            # landing page: arquitectura en vivo, votar, resultados, clúster, consola API
 └── scripts/
     ├── prueba.ps1         # N peticiones con nodo, HTTP y tiempo (Windows)
     └── prueba.sh          # lo mismo para Linux / macOS
@@ -57,7 +57,8 @@ Abrir **http://localhost:8088** en el navegador.
 |---|---|---|
 | GET | `/health` | Health check del nodo (`{"estado":"saludable","nodo":"nodo1",...}`) |
 | GET | `/api/info` | Qué nodo atendió, uptime y peticiones atendidas |
-| GET | `/api/candidatos` | Lista de planillas |
+| GET | `/api/cluster` | Estado de los 3 nodos: el nodo que atiende consulta a los otros por `clusternet` |
+| GET | `/api/candidatos` | Lista de planillas con sus propuestas |
 | GET | `/api/resultados` | Conteo de votos (igual en los 3 nodos) y votos registrados por cada nodo |
 | GET | `/api/votos/{carnet}` | Consulta si un carnet ya votó y qué nodo registró el voto |
 | POST | `/api/votar` | Body `{"carnet":"2026-0001","candidato":"azul"}` → 201, 400 o 409 (ya votó) |

@@ -13,11 +13,58 @@ const CARNETS_DIR = path.join(DATA_DIR, "carnets");
 const PUBLIC_DIR = path.join(__dirname, "public");
 const INICIO = Date.now();
 
+const PEERS = (process.env.PEERS || "nodo1,nodo2,nodo3").split(",").map((p) => p.trim()).filter(Boolean);
+
 const CANDIDATOS = [
-  { id: "azul", nombre: "Planilla Azul", lema: "Más laboratorios abiertos", color: "#2563eb" },
-  { id: "verde", nombre: "Planilla Verde", lema: "Campus sostenible", color: "#16a34a" },
-  { id: "naranja", nombre: "Planilla Naranja", lema: "Becas y transporte", color: "#ea580c" },
+  {
+    id: "azul",
+    nombre: "Planilla Azul",
+    siglas: "PA",
+    lema: "Más laboratorios abiertos",
+    color: "#2a78d6",
+    propuestas: ["Laboratorios abiertos hasta las 9 pm", "Wi-Fi estable en todo el campus", "Tutorías entre estudiantes"],
+  },
+  {
+    id: "naranja",
+    nombre: "Planilla Naranja",
+    siglas: "PN",
+    lema: "Becas y transporte",
+    color: "#eb6834",
+    propuestas: ["Fondo de becas de emergencia", "Ruta de transporte nocturna", "Descuentos en la cafetería"],
+  },
+  {
+    id: "verde",
+    nombre: "Planilla Verde",
+    siglas: "PV",
+    lema: "Campus sostenible",
+    color: "#1baf7a",
+    propuestas: ["Paneles solares en los edificios", "Reciclaje en cada aula", "Más zonas verdes y de estudio"],
+  },
 ];
+
+// Consulta /api/info de otro nodo por la red privada (health check activo entre nodos).
+function consultarPeer(nombre) {
+  return new Promise((resolve) => {
+    const inicio = Date.now();
+    if (nombre === NODO) {
+      return resolve({ nodo: NODO, enLinea: true, ms: 0, uptimeSegundos: Math.round((Date.now() - INICIO) / 1000), peticionesAtendidas });
+    }
+    const req = http.get({ host: nombre, port: PORT, path: "/api/info", timeout: 800 }, (res) => {
+      let datos = "";
+      res.on("data", (c) => (datos += c));
+      res.on("end", () => {
+        try {
+          const info = JSON.parse(datos);
+          resolve({ nodo: nombre, enLinea: res.statusCode === 200, ms: Date.now() - inicio, uptimeSegundos: info.uptimeSegundos, peticionesAtendidas: info.peticionesAtendidas });
+        } catch {
+          resolve({ nodo: nombre, enLinea: false, ms: Date.now() - inicio, error: "respuesta inválida" });
+        }
+      });
+    });
+    req.on("timeout", () => req.destroy(new Error("sin respuesta en 800 ms")));
+    req.on("error", (e) => resolve({ nodo: nombre, enLinea: false, ms: Date.now() - inicio, error: e.code || e.message }));
+  });
+}
 
 fs.mkdirSync(CARNETS_DIR, { recursive: true });
 
@@ -86,7 +133,7 @@ const servidor = http.createServer(async (req, res) => {
   const ruta = url.pathname;
   const inicio = Date.now();
   res.on("finish", () => {
-    if (ruta !== "/health") {
+    if (ruta !== "/health" && ruta !== "/api/info" && ruta !== "/api/cluster") {
       console.log(`[${NODO}] ${req.method} ${ruta} -> ${res.statusCode} (${Date.now() - inicio} ms)`);
     }
   });
@@ -106,6 +153,12 @@ const servidor = http.createServer(async (req, res) => {
         peticionesAtendidas,
         timestamp: new Date().toISOString(),
       });
+    }
+
+    // Estado de todos los nodos, visto desde el nodo que atiende la petición.
+    if (req.method === "GET" && ruta === "/api/cluster") {
+      const nodos = await Promise.all(PEERS.map(consultarPeer));
+      return json(res, 200, { nodo: NODO, enLinea: nodos.filter((n) => n.enLinea).length, total: nodos.length, nodos });
     }
 
     if (req.method === "GET" && ruta === "/api/candidatos") {
@@ -161,7 +214,8 @@ const servidor = http.createServer(async (req, res) => {
         }
         throw e;
       }
-      const voto = { carnet: c, candidato, nodo: NODO, fecha: new Date().toISOString() };
+      const folio = require("node:crypto").randomBytes(4).toString("hex").toUpperCase();
+      const voto = { folio, carnet: c, candidato, nodo: NODO, fecha: new Date().toISOString() };
       fs.appendFileSync(VOTOS_FILE, JSON.stringify(voto) + "\n");
       return json(res, 201, { ok: true, nodo: NODO, mensaje: `Voto registrado por ${NODO}.`, voto });
     }
