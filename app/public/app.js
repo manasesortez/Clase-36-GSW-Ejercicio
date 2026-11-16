@@ -315,9 +315,6 @@ async function latido() {
   if (historial.length > MAX_HIST) historial.shift();
 
   // Estado general
-  const pill = $("pill-estado");
-  pill.className = "pill " + (punto.ok ? "ok" : "error");
-  pill.querySelector(".pill-texto").textContent = punto.ok ? "Servicio en línea" : "Servicio caído";
   if (ultimoOk !== null && ultimoOk !== punto.ok) {
     evento(punto.ok ? "ok" : "error", punto.ok ? "El servicio volvió a responder" : `El balanceador no respondió (${punto.status})`);
   }
