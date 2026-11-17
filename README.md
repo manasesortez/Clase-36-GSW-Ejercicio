@@ -5,8 +5,11 @@ Gestión de Servidores Web · Unidad 3 · Clúster + balanceo de carga
 > **Caso:** una plataforma de votación en línea para una elección estudiantil necesita garantizar que el
 > servicio nunca se caiga durante el día de votación, incluso si un servidor individual falla.
 
-Este repositorio trae el sistema **ya implementado**: una landing page (frontend) y una API (backend) que
+Este repositorio trae la aplicación ya implementada: una landing page (frontend) y una API (backend) que
 corren en un clúster de 3 nodos detrás de un balanceador Nginx.
+
+> **El balanceador (`nginx/nginx.conf`) no viene incluido:** cada estudiante lo escribe siguiendo la guía
+> de la clase, antes de levantar el clúster.
 
 ```
 Usuario (navegador / curl)
@@ -30,7 +33,31 @@ Usuario (navegador / curl)
 ```bash
 git clone https://github.com/manasesortez/Clase-36-GSW-Ejercicio.git
 cd Clase-36-GSW-Ejercicio
+```
+
+**Antes de levantar**, crear `nginx/nginx.conf` con el contenido de la guía de la clase:
+
+```powershell
+# Windows
+mkdir nginx
+notepad nginx\nginx.conf
+```
+
+```bash
+# Linux / macOS
+mkdir nginx
+nano nginx/nginx.conf
+```
+
+> Si se ejecuta `docker compose up` sin ese archivo, Docker crea una **carpeta** `nginx/nginx.conf` y el
+> balanceador no arranca (`not a directory`). Solución: `docker compose down`, borrar esa carpeta y crear
+> el archivo.
+
+Luego levantar y validar el balanceador:
+
+```bash
 docker compose up -d --build
+docker compose exec lb nginx -t
 docker compose ps
 ```
 
@@ -41,6 +68,7 @@ Abrir **http://localhost:8088** en el navegador.
 ```
 .
 ├── docker-compose.yml     # 3 nodos + lb, red clusternet, volumen votos, healthchecks
+├── nginx/nginx.conf       # (lo crea el estudiante, no viene en el repo)
 ├── app/
 │   ├── Dockerfile         # node:22-alpine, sin dependencias externas
 │   ├── server.js          # API + servidor de archivos estáticos
@@ -83,6 +111,9 @@ docker compose start nodo2
 ```
 
 ## Decisiones de diseño
+
+Las de Nginx (`zone`, `proxy_connect_timeout`, IPs fijas + `extra_hosts`) se aplican con el `nginx.conf`
+que escribe el estudiante.
 
 - **Solo `lb` publica un puerto.** Los nodos no tienen `ports:`; solo se alcanzan por `clusternet`.
 - **`zone` en el `upstream`**: los workers de Nginx comparten el turno del Round Robin (sin esto, peticiones
